@@ -158,7 +158,7 @@ function renderMenu() {
     let pic = savedPics[p.id] || defaultPics[p.id];
     return `<div class="card">
       <button class="cam-btn" onclick="uploadPic(${p.id})" title="Cambiar foto">📷</button>
-      <div><img src="${pic}" class="p-img" onerror="this.style.display='none'"><b>${p.name}</b><div class="desc">${p.desc}</div></div>
+      <div><img src="${pic}" class="p-img" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\"http://w3.org\" width=\"300\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"%23e8f5e9\"/></svg>'"><b>${p.name}</b><div class="desc">${p.desc}</div></div>
       <div><div class="price">$${p.price.toFixed(2)}</div><button class="btn-add" onclick="selectItem(${p.id})">+ Agregar</button></div>
     </div>`;
   }).join("");
@@ -167,7 +167,7 @@ function uploadPic(id) {
   let inp = document.createElement("input");
   inp.type = "file"; inp.accept = "image/*";
   inp.onchange = e => {
-    let f = e.target.files; if (!f) return;
+    let f = e.target.files[0]; if (!f) return;
     let r = new FileReader();
     r.onload = ev => {
       let img = new Image();
