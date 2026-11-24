@@ -56,7 +56,7 @@
     <div class="stat-card"><small>Efectivo</small><h3 id="statCash">$0.00</h3></div>
     <div class="stat-card"><small>DeUna/Transf</small><h3 id="statDigital">$0.00</h3></div>
   </div>
-  <button class="btn-add" style="background:#ddd;margin-bottom:12px;" onclick="clearOrders()">🗑️ Cerrar Caja / Reiniciar</button>
+  <button class="btn-add" style="background:#ddd;margin-bottom:12px;" onclick="exportCSV()">📊 Descargar Excel (CSV)</button><button class="btn-add" style="background:#90caf9;margin-bottom:8px;" onclick="window.print()">🖨️ Imprimir Cierre</button><button class="btn-add" style="background:#ddd;margin-bottom:12px;" onclick="clearOrders()">🗑️ Cerrar Caja / Reiniciar</button>
   <div id="ordersList"></div>
 </div>
 <div class="modal" id="comboModal">
@@ -138,7 +138,34 @@ function init() {
   renderMenu();
 }
 
-function setCat(c) { currentCat = c; init(); }
+function setCat(c) { currentCat = c; 
+function cancelOrder(i) {
+  let motivo = prompt("¿Motivo de anulación? (Ej: Error de cajero, cliente canceló):");
+  if (motivo === null) return;
+  orders[i].status = "Anulado ❌";
+  orders[i].motivo = motivo || "Sin motivo";
+  localStorage.setItem("pastaza_orders", JSON.stringify(orders));
+  renderDash();
+}
+function exportCSV() {
+  if (!orders.length) return alert("No hay ventas para exportar");
+  let csv = "Turno,Hora,Cliente,Cajero,Tipo,Pago,Productos,Total,Estado,Motivo\n";
+  orders.forEach(o => {
+    let prods = o.items.map(i => i.name + (i.details ? " ("+i.details+")" : "")).join(" + ");
+    csv += `${o.turno},${o.time},"${o.name}","${o.cashier}","${o.type}","${o.pay}","${prods}",${o.total.toFixed(2)},"${o.status}","${o.motivo||""}"\n`;
+  });
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"}));
+  a.download = "Caja_Pastaza_" + new Date().toISOString().slice(0,10) + ".csv";
+  a.click();
+}
+function printTicket(i) {
+  let o = orders[i];
+  let w = window.open("", "", "width=300,height=500");
+  w.document.write(`<pre style="font-family:monospace;font-size:14px;">SABOR PASTAZA EXPRESS\n----------------------\nTURNO: #${o.turno} (${o.time})\nEstado: ${o.status}\nCliente: ${o.name}\nCajero: ${o.cashier}\nTipo: ${o.type}\nPago: ${o.pay}\n----------------------\n${o.items.map(it => "- "+it.name+" $"+it.finalPrice.toFixed(2)+(it.details?"\n  "+it.details:"")).join("\n")}\n----------------------\nTOTAL: $${o.total.toFixed(2)}\n¡Gracias por su visita!</pre>`);
+  w.print(); w.close();
+}
+init(); }
 
 function renderMenu() {
   const list = currentCat === "Todas" ? products : products.filter(p => p.cat === currentCat);
@@ -206,7 +233,7 @@ function sendOrder() {
   msg += `\n*TOTAL: $${currentTotal.toFixed(2)}*`;
   cart = []; updateCart(); closeModals();
   alert(`¡Orden #${turno} registrada!`);
-  window.open(`https://wa.me{whatsappNum}?text=${encodeURIComponent(msg)}`, "_blank");
+  window.open(`https://wa.me/${whatsappNum}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 function toggleView() {
@@ -216,7 +243,7 @@ function toggleView() {
 }
 
 function renderDash() {
-  const total = orders.reduce((s, o) => s + o.total, 0), cash = orders.filter(o => o.pay === "Efectivo").reduce((s, o) => s + o.total, 0);
+  const total = orders.filter(o => o.status !== "Anulado ❌").reduce((s, o) => s + o.total, 0), cash = orders.filter(o => o.pay === "Efectivo" && o.status !== "Anulado ❌").reduce((s, o) => s + o.total, 0);
   document.getElementById("statSales").innerText = `$${total.toFixed(2)}`;
   document.getElementById("statCash").innerText = `$${cash.toFixed(2)}`;
   document.getElementById("statDigital").innerText = `$${(total - cash).toFixed(2)}`;
@@ -226,13 +253,44 @@ function renderDash() {
       <small>${o.cashier} | ${o.type} | <b>${o.pay}</b></small>
       <div style="margin:6px 0;font-size:0.9rem;">${o.items.map(it => `• ${it.name} <small>(${it.details})</small>`).join("<br>")}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;"><b>Total: $${o.total.toFixed(2)}</b>
-      ${!o.status.includes('Listo') ? `<button class="btn-pay" style="padding:5px 10px;font-size:0.8rem;" onclick="markDone(${i})">✅ Despachar</button>` : '<span>✅ Entregado</span>'}</div>
+      <div>
+${o.status === 'Anulado ❌' ? '<span style="color:red;font-weight:bold;">❌ Anulado</span>' : (!o.status.includes('Listo') ? `<button class="btn-pay" style="padding:5px 8px;font-size:0.8rem;" onclick="markDone(${i})">✅ Despachar</button>` : '<span>✅ Entregado</span>')}
+<button onclick="printTicket(${i})" style="padding:5px 8px;border-radius:6px;border:1px solid #ccc;margin-left:4px;">🖨️</button>
+${o.status !== 'Anulado ❌' ? `<button onclick="cancelOrder(${i})" style="padding:5px 8px;border-radius:6px;border:none;background:#ffebee;color:#c62828;font-weight:bold;margin-left:4px;">❌</button>` : ''}
+</div></div>
     </div>
   `).join("") || "<p>Sin ventas hoy.</p>";
 }
 
 function markDone(i) { orders[i].status = "Listo ✅"; localStorage.setItem("pastaza_orders", JSON.stringify(orders)); renderDash(); }
 function clearOrders() { if(confirm("¿Cerrar caja y reiniciar turnos?")) { orders = []; localStorage.removeItem("pastaza_orders"); renderDash(); } }
+
+function cancelOrder(i) {
+  let motivo = prompt("¿Motivo de anulación? (Ej: Error de cajero, cliente canceló):");
+  if (motivo === null) return;
+  orders[i].status = "Anulado ❌";
+  orders[i].motivo = motivo || "Sin motivo";
+  localStorage.setItem("pastaza_orders", JSON.stringify(orders));
+  renderDash();
+}
+function exportCSV() {
+  if (!orders.length) return alert("No hay ventas para exportar");
+  let csv = "Turno,Hora,Cliente,Cajero,Tipo,Pago,Productos,Total,Estado,Motivo\n";
+  orders.forEach(o => {
+    let prods = o.items.map(i => i.name + (i.details ? " ("+i.details+")" : "")).join(" + ");
+    csv += `${o.turno},${o.time},"${o.name}","${o.cashier}","${o.type}","${o.pay}","${prods}",${o.total.toFixed(2)},"${o.status}","${o.motivo||""}"\n`;
+  });
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"}));
+  a.download = "Caja_Pastaza_" + new Date().toISOString().slice(0,10) + ".csv";
+  a.click();
+}
+function printTicket(i) {
+  let o = orders[i];
+  let w = window.open("", "", "width=300,height=500");
+  w.document.write(`<pre style="font-family:monospace;font-size:14px;">SABOR PASTAZA EXPRESS\n----------------------\nTURNO: #${o.turno} (${o.time})\nEstado: ${o.status}\nCliente: ${o.name}\nCajero: ${o.cashier}\nTipo: ${o.type}\nPago: ${o.pay}\n----------------------\n${o.items.map(it => "- "+it.name+" $"+it.finalPrice.toFixed(2)+(it.details?"\n  "+it.details:"")).join("\n")}\n----------------------\nTOTAL: $${o.total.toFixed(2)}\n¡Gracias por su visita!</pre>`);
+  w.print(); w.close();
+}
 init();
 </script>
 </body>
