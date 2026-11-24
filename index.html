@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sabor Pastaza Express</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
+  body{background:#f1f8e9;color:#1b5e20;padding-bottom:80px}
+  header{background:#1b5e20;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+  .btn-top{background:#ffb300;color:#000;border:none;padding:8px 12px;border-radius:8px;font-weight:bold;cursor:pointer}
+  .cats{display:flex;gap:8px;padding:10px;overflow-x:auto;background:#e8f5e9}
+  .cat{padding:6px 14px;border-radius:20px;border:1px solid #1b5e20;background:#fff;color:#1b5e20;font-weight:600;white-space:nowrap}
+  .cat.active{background:#1b5e20;color:#fff}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
+  @media(min-width:768px){.grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}}
+  .card{background:#fff;border-radius:12px;padding:10px;box-shadow:0 2px 6px rgba(0,0,0,0.08);display:flex;flex-direction:column;justify-content:space-between}
+  .p-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;margin-bottom:6px;background:#e8f5e9;display:block}
+  .desc{font-size:0.78rem;color:#555;margin:4px 0}
+  .price{font-weight:bold;font-size:1.05rem;margin:4px 0}
+  .btn-add{width:100%;background:#2e7d32;color:#fff;border:none;padding:8px;border-radius:8px;font-weight:bold;cursor:pointer}
+  .cart-bar{position:fixed;bottom:0;left:0;right:0;background:#1b5e20;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+  .btn-pay{background:#ffb300;color:#000;border:none;padding:10px 16px;border-radius:8px;font-weight:bold;cursor:pointer}
+  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;padding:16px;z-index:20}
+  .modal-box{background:#fff;padding:16px;border-radius:12px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto}
+  .opt-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee}
+  input,select{width:100%;padding:8px;margin-top:8px;border:1px solid #ccc;border-radius:8px}
+  .dash{padding:12px;display:none}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .stat{background:#fff;padding:10px;border-radius:10px;text-align:center}
+  .order-card{background:#fff;padding:12px;border-radius:10px;margin-bottom:10px;border-left:5px solid #ff9800}
+  .order-card.listo{border-left-color:#2e7d32}
+  @media print{header,#kioscoView,#dashView,.cart-bar,.modal{display:none!important}#printZone{display:block!important;font-family:monospace;font-size:14px;color:#000;background:#fff;padding:12px}}
+</style>
+</head>
+<body>
+<header><h3>🌴 Sabor Pastaza</h3><button class="btn-top" id="toggleBtn" onclick="toggleView()">👨‍🍳 Caja / Cocina</button></header>
+<div id="kioscoView">
+  <div class="cats" id="catBar"></div>
+  <div class="grid" id="menuGrid"></div>
+  <div class="cart-bar"><div><b id="cartCount">0 items</b> • <span id="cartTotal">$0.00</span></div><button class="btn-pay" onclick="openPay()">Cobrar ➔</button></div>
+</div>
+<div class="dash" id="dashView">
+  <div class="stats">
+    <div class="stat"><small>Total Caja</small><h3 id="dTotal">$0.00</h3></div>
+    <div class="stat"><small>Efectivo</small><h3 id="dCash">$0.00</h3></div>
+    <div class="stat"><small>DeUna/Transf</small><h3 id="dBank">$0.00</h3></div>
+  </div>
+  <button class="btn-add" style="background:#2e7d32;margin-bottom:8px;" onclick="exportCSV()">📊 Descargar Excel (CSV)</button>
+  <button class="btn-add" style="background:#90caf9;color:#000;margin-bottom:8px;" onclick="printClose()">🖨️ Imprimir Cierre</button>
+  <button class="btn-add" style="background:#ddd;color:#000;margin-bottom:12px;" onclick="clearOrders()">🗑️ Cerrar Caja / Reiniciar</button>
+  <div id="ordersList"></div>
+</div>
+<div class="modal" id="comboModal"><div class="modal-box"><h3 id="mTitle"></h3><p id="mDesc" class="desc"></p><p id="mBasePrice" class="price"></p><div id="dynOpts"></div><input type="text" id="optNote" placeholder="Nota (Ej: Sin cebolla...)"><div style="display:flex;gap:8px;margin-top:12px;"><button class="btn-add" style="background:#ccc;color:#000;" onclick="closeModals()">Cancelar</button><button class="btn-add" onclick="confirmItem()">Agregar</button></div></div></div>
+<div class="modal" id="payModal"><div class="modal-box"><h3>Finalizar Orden</h3><div id="cartSummary" style="margin:8px 0;font-size:0.9rem;"></div><input type="text" id="custName" placeholder="Nombre del Cliente"><select id="cashier"><option>Caja 1 - Principal</option><option>Caja 2 - Express</option></select><select id="orderType"><option>Para Servirse</option><option>Para Llevar</option><option>Delivery</option></select><select id="payMethod" onchange="calcChange()"><option>Efectivo</option><option>DeUna / Banco Pichincha</option><option>Transferencia</option></select><div id="cashBox"><input type="number" step="0.01" id="cashGiven" placeholder="Efectivo recibido ($)" oninput="calcChange()"><p id="changeTxt" style="margin-top:6px;font-weight:bold;">Vuelto: $0.00</p></div><div style="display:flex;gap:8px;margin-top:12px;"><button class="btn-add" style="background:#ccc;color:#000;" onclick="closeModals()">Volver</button><button class="btn-pay" style="width:100%;" onclick="finishOrder()">✅ Confirmar y WhatsApp</button></div></div></div>
+<div id="printZone" style="display:none;"></div>
+<script>
+const whatsappNum = "593996348376";
+const products = [
+  {id:1,cat:"Amazónicos",name:"Maito de Tilapia",desc:"Tilapia asada en hoja de bijao con yuca, palmito y curtido.",price:5.50,cost:2.40,opts:[{n:"🥤 Combo (+Guayusa/Yuca)",p:1.75},{n:"🌿 Extra Palmito",p:1.25},{n:"🌶️ Ají de Cocona",p:0,def:true}]},
+  {id:2,cat:"Amazónicos",name:"Pinchos Chontacuro",desc:"1 pincho con 3 chontacuros asados al carbón, yuca y sal prieta.",price:4.00,cost:1.80,opts:[{n:"🐛 +2 Chontacuros",p:2.50},{n:"🍌 Maduro c/Queso",p:1.25},{n:"🌶️ Ají de Maní",p:0,def:true}]},
+  {id:3,cat:"Amazónicos",name:"Volquetero Pastacense",desc:"Chocho, tostado, chifle crocante, atún, tomate y limón.",price:3.50,cost:1.40,opts:[{n:"🐟 Extra Atún",p:1.50},{n:"🍌 Extra Chifle",p:0.75},{n:"🌶️ Con Ají",p:0,def:true}]},
+  {id:4,cat:"Rápida",name:"Burger Amazónica",desc:"Carne artesanal, queso cheddar, maduro y salsa de cocona.",price:4.50,cost:2.00,opts:[{n:"🍟 Combo (+Papas/Cola)",p:2.25},{n:"🥩 Doble Carne",p:1.75},{n:"🧀 Extra Queso",p:0.75}]},
+  {id:5,cat:"Rápida",name:"Salchipapa Chicharrón",desc:"Papa nativa frita, salchicha ranchera y chicharrón.",price:3.75,cost:1.60,opts:[{n:"🥓 Extra Chicharrón",p:1.50},{n:"🍳 Huevo Frito",p:0.75},{n:"🥫 Todas las salsas",p:0,def:true}]},
+  {id:6,cat:"Rápida",name:"Bolón Mixto c/ Seco",desc:"Verde majado con queso, chicharrón y jugo de seco.",price:3.25,cost:1.35,opts:[{n:"☕ Combo (+Café)",p:1.00},{n:"🍳 Huevo Frito",p:0.75},{n:"🍖 Extra Jugo Seco",p:0.50}]},
+  {id:7,cat:"Bebidas",name:"Jarra Guayusa Helada",desc:"Infusión amazónica con limón sutil y panela.",price:1.50,cost:0.45},
+  {id:8,cat:"Bebidas",name:"Chicha de Chonta",desc:"Bebida tradicional dulce y refrescante bien fría.",price:1.25,cost:0.40},
+  {id:9,cat:"Bebidas",name:"Jugo de Cocona",desc:"Jugo 100% natural recién licuado de fruta amazónica.",price:1.50,cost:0.45}
+];
+function finishOrder(){const name=document.getElementById("custName").value.trim()||"Cliente Kiosco",cashier=document.getElementById("cashier").value,type=document.getElementById("orderType").value,pay=document.getElementById("payMethod").value,tot=cart.reduce((s,i)=>s+i.finalPrice,0);const ord={turno,name,cashier,type,pay,items:[...cart],total:tot,status:"En Cocina 🍳",time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};orders.unshift(ord);localStorage.setItem("pastaza_orders",JSON.stringify(orders));localStorage.setItem("pastaza_turno",turno+1);const txt=encodeURIComponent(`🌴 *SABOR PASTAZA - TURNO #${turno}*\n👤 ${name} (${type})\n💳 ${pay} | ${cashier}\n`+cart.map(c=>`• ${c.name} $${c.finalPrice.toFixed(2)} ${c.details?`(${c.details})`:""}`).join("\n")+`\n*TOTAL: $${tot.toFixed(2)}*`);turno++;cart=[];updateCart();closeModals();window.open(`https://wa.me{whatsappNum}?text=${txt}`,"_blank");}
+function closeModals(){document.querySelectorAll(".modal").forEach(m=>m.style.display="none");}
+function toggleView(){const d=document.getElementById("dashView"),k=document.getElementById("kioscoView"),b=document.getElementById("toggleBtn");if(d.style.display==="block"){d.style.display="none";k.style.display="block";b.innerText="👨‍🍳 Caja / Cocina";}else{d.style.display="block";k.style.display="none";b.innerText="🌴 Ver Menú";renderDash();}}
+function renderDash(){const v=orders.filter(o=>o.status!=="Anulado ❌"),tot=v.reduce((s,o)=>s+o.total,0),cash=v.filter(o=>o.pay==="Efectivo").reduce((s,o)=>s+o.total,0);document.getElementById("dTotal").innerText=`$${tot.toFixed(2)}`;document.getElementById("dCash").innerText=`$${cash.toFixed(2)}`;document.getElementById("dBank").innerText=`$${(tot-cash).toFixed(2)}`;document.getElementById("ordersList").innerHTML=orders.map((o,i)=>`<div class="order-card ${o.status.includes('Listo')?'listo':''}"><div style="display:flex;justify-content:space-between;"><b>Turno #${o.turno} - ${o.name}</b><span>${o.time}</span></div><small>${o.cashier} | ${o.type} | <b>${o.pay}</b></small><div style="margin:6px 0;font-size:0.9rem;">${o.items.map(it=>`• ${it.name} ${it.details?`<small>(${it.details})</small>`:""}`).join("<br>")}</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;"><b>Total: $${o.total.toFixed(2)}</b><div style="display:flex;gap:10px;align-items:center;">${o.status==='Anulado ❌'?'<span style="color:red;font-weight:bold;">❌ Anulado</span>':(!o.status.includes('Listo')?`<button type="button" class="btn-pay" style="padding:7px 12px;font-size:0.85rem;" onclick="markDone(${i})">✅ Despachar</button>`:'<span style="color:#1b5e20;font-weight:bold;">✅ Entregado</span>')}<button type="button" onclick="printTicket(${i})" style="padding:7px 12px;border-radius:8px;border:1px solid #888;background:#fff;font-size:1rem;">🖨️</button>${o.status!=='Anulado ❌'?`<button type="button" onclick="cancelOrder(${i})" style="padding:7px 12px;border-radius:8px;border:none;background:#ffebee;color:#c62828;font-weight:bold;">❌</button>`:''}</div></div></div>`).join("");}
+function markDone(i){orders[i].status="Listo ✅";localStorage.setItem("pastaza_orders",JSON.stringify(orders));renderDash();}
+function cancelOrder(i){let m=prompt("Motivo de anulación:");if(m===null)return;orders[i].status="Anulado ❌";orders[i].motivo=m||"Sin motivo";localStorage.setItem("pastaza_orders",JSON.stringify(orders));renderDash();}
+function clearOrders(){if(confirm("¿Cerrar caja y reiniciar turnos a #1?")){orders=[];turno=1;localStorage.setItem("pastaza_orders","[]");localStorage.setItem("pastaza_turno","1");renderDash();}}
+function exportCSV(){if(!orders.length)return alert("Sin ventas");let csv="Turno,Hora,Cliente,Cajero,Tipo,Pago,Productos,Venta ($),Costo ($),Ganancia ($),Estado,Motivo\n",sv=0,sc=0,sg=0,an=0;orders.forEach(o=>{let pr=o.items.map(i=>i.name+(i.details?" ("+i.details+")":"")).join(" + "),c=o.items.reduce((s,i)=>s+(i.finalCost||o.total*0.4),0),g=o.total-c;if(o.status!=="Anulado ❌"){sv+=o.total;sc+=c;sg+=g;}else{an++;}csv+=`${o.turno},${o.time},"${o.name}","${o.cashier}","${o.type}","${o.pay}","${pr}",${o.total.toFixed(2)},${c.toFixed(2)},${g.toFixed(2)},"${o.status}","${o.motivo||""}"\n`;});csv+=`\nRESUMEN,,,,,,Validas: ${orders.length-an} | Anuladas: ${an},${sv.toFixed(2)},${sc.toFixed(2)},${sg.toFixed(2)},,\n`;let a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"}));a.download="Reporte_Pastaza_"+new Date().toISOString().slice(0,10)+".csv";a.click();}
+function printClose(){let v=orders.filter(o=>o.status!=="Anulado ❌"),tot=v.reduce((s,o)=>s+o.total,0),cash=v.filter(o=>o.pay==="Efectivo").reduce((s,o)=>s+o.total,0),pz=document.getElementById("printZone");pz.style.display="block";pz.innerHTML=`<pre>CIERRE DIARIO - SABOR PASTAZA\nFecha: ${new Date().toLocaleDateString()}\n-----------------------\nValidas: ${v.length} | Anuladas: ${orders.length-v.length}\nEfectivo: $${cash.toFixed(2)}\nDeUna/Transf: $${(tot-cash).toFixed(2)}\nTOTAL CAJA: $${tot.toFixed(2)}</pre>`;window.print();}
+function printTicket(i){let o=orders[i],pz=document.getElementById("printZone");pz.style.display="block";pz.innerHTML=`<pre>SABOR PASTAZA EXPRESS\n-----------------------\nTURNO: #${o.turno} (${o.time})\nCliente: ${o.name} | ${o.type}\nCajero: ${o.cashier} | ${o.pay}\n-----------------------\n${o.items.map(it=>"- "+it.name+" $"+it.finalPrice.toFixed(2)+(it.details?"\n  "+it.details:"")).join("\n")}\n-----------------------\nTOTAL: $${o.total.toFixed(2)}</pre>`;window.print();}
+init();
+</script>
+</body>
+</html>
