@@ -59,31 +59,7 @@
   <button class="btn-add" style="background:#ddd;margin-bottom:12px;" onclick="exportCSV()">📊 Descargar Excel (CSV)</button><button class="btn-add" style="background:#90caf9;margin-bottom:8px;" onclick="window.print()">🖨️ Imprimir Cierre</button><button class="btn-add" style="background:#ddd;margin-bottom:12px;" onclick="clearOrders()">🗑️ Cerrar Caja / Reiniciar</button>
   <div id="ordersList"></div>
 </div>
-<div class="modal" id="comboModal">
-  <div class="modal-box">
-    <h3 id="mTitle">Personalizar</h3>
-    <p id="mBasePrice" style="color:#666;margin-bottom:8px;"></p>
-    <div class="opt-row">
-      <label><input type="checkbox" id="optCombo"> 🥤 Combo (+Yuca y Guayusa)</label>
-      <b>+$2.00</b>
-    </div>
-    <div class="opt-row">
-      <label><input type="checkbox" id="optMaduro"> 🍌 Maduro con Queso</label>
-      <b>+$1.25</b>
-    </div>
-    <div class="opt-row">
-      <label><input type="checkbox" id="optAji"> 🌶️ Ají de Cocona / Maní</label>
-      <b>Gratis</b>
-    </div>
-    <input type="text" id="optNote" placeholder="Ej: Bien doradito, sin cebolla...">
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="btn-add" style="background:#ccc;" onclick="closeModals()">Cancelar</button>
-      <button class="btn-add" onclick="confirmItem()">Agregar</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="payModal">
+<div class="modal" id="comboModal"><div class="modal-box"><h3 id="mTitle"></h3><p id="mDesc" style="font-size:0.85rem;color:#444;margin:4px 0;"></p><p id="mBasePrice" style="color:#1b5e20;font-weight:bold;margin-bottom:8px;"></p><div id="dynOpts"></div><input type="text" id="optNote" placeholder="Nota..."><div style="display:flex;gap:8px;margin-top:12px;"><button class="btn-add" style="background:#ccc;" onclick="closeModals()">Cancelar</button><button class="btn-add" onclick="confirmItem()">Agregar</button></div></div></div><div class="modal" id="payModal">
   <div class="modal-box">
     <h3>🧾 Resumen y Caja</h3>
     <div id="cartItems" style="max-height:140px;overflow-y:auto;margin:6px 0;"></div>
@@ -114,19 +90,18 @@
   </div>
 </div>
 <script>
-const whatsappNum = "593999999999";
+const whatsappNum = "593996348376";
 const products = [
-  { id: 1, cat: "Amazónicos", name: "Maito de Tilapia", desc: "Con yuca, palmito y curtido", price: 5.50, img: "🐟", custom: true },
-  { id: 2, cat: "Amazónicos", name: "Pinchos Chontacuro", desc: "3 unidades asadas + yuca", price: 4.00, img: "🐛", custom: true },
-  { id: 3, cat: "Amazónicos", name: "Volquetero Pastacense", desc: "Chocho, tostado, chifle y atún", price: 3.50, img: "🥗", custom: true },
-  { id: 4, cat: "Rápida", name: "Burger Amazónica", desc: "Carne, queso, maduro y cocona", price: 4.50, img: "🍔", custom: true },
-  { id: 5, cat: "Rápida", name: "Salchipapa Chicharrón", desc: "Papa nativa, salchicha y chicharrón", price: 3.75, img: "🍟", custom: true },
-  { id: 6, cat: "Rápida", name: "Bolón Mixto c/ Seco", desc: "Verde majado, queso y chicharrón", price: 3.25, img: "🟢", custom: true },
-  { id: 7, cat: "Bebidas", name: "Jarra Guayusa Helada", desc: "Con limón y panela orgánica", price: 1.50, img: "🍹", custom: false },
-  { id: 8, cat: "Bebidas", name: "Chicha de Chonta", desc: "Tradicional bien fría", price: 1.25, img: "🥥", custom: false },
-  { id: 9, cat: "Bebidas", name: "Jugo de Cocona", desc: "100% fruta natural de la zona", price: 1.50, img: "🍊", custom: false }
+  { id: 1, cat: "Amazónicos", name: "Maito de Tilapia", desc: "Tilapia asada en hoja de bijao con yuca, palmito y curtido.", price: 5.50, img: "🐟", opts: [{n:"🥤 Combo (+Guayusa/Yuca)", p:1.75}, {n:"🌿 Extra Palmito", p:1.25}, {n:"🌶️ Ají de Cocona", p:0, def:true}] },
+  { id: 2, cat: "Amazónicos", name: "Pinchos Chontacuro", desc: "3 pinchos al carbón con yuca cocinada y sal prieta.", price: 4.00, img: "🐛", opts: [{n:"🐛 +2 Chontacuros", p:2.50}, {n:"🍌 Maduro c/Queso", p:1.25}, {n:"🌶️ Ají de Maní", p:0, def:true}] },
+  { id: 3, cat: "Amazónicos", name: "Volquetero Pastacense", desc: "Chocho, tostado, chifle crocante, atún, tomate y limón.", price: 3.50, img: "🥗", opts: [{n:"🐟 Extra Atún", p:1.50}, {n:"🍌 Extra Chifle", p:0.75}, {n:"🌶️ Con Ají", p:0, def:true}] },
+  { id: 4, cat: "Rápida", name: "Burger Amazónica", desc: "Carne artesanal, queso cheddar, maduro y salsa de cocona.", price: 4.50, img: "🍔", opts: [{n:"🍟 Combo (+Papas/Cola)", p:2.25}, {n:"🥩 Doble Carne", p:1.75}, {n:"🧀 Extra Queso", p:0.75}] },
+  { id: 5, cat: "Rápida", name: "Salchipapa Chicharrón", desc: "Papa nativa frita, salchicha ranchera y chicharrón.", price: 3.75, img: "🍟", opts: [{n:"🥓 Extra Chicharrón", p:1.50}, {n:"🍳 Huevo Frito", p:0.75}, {n:"🥫 Todas las salsas", p:0, def:true}] },
+  { id: 6, cat: "Rápida", name: "Bolón Mixto c/ Seco", desc: "Verde majado con queso, chicharrón y jugo de seco.", price: 3.25, img: "🟢", opts: [{n:"☕ Combo (+Café)", p:1.00}, {n:"🍳 Huevo Frito", p:0.75}, {n:"🍖 Extra Jugo Seco", p:0.50}] },
+  { id: 7, cat: "Bebidas", name: "Jarra Guayusa Helada", desc: "Infusión amazónica con limón sutil y panela.", price: 1.50, img: "🍹" },
+  { id: 8, cat: "Bebidas", name: "Chicha de Chonta", desc: "Bebida tradicional dulce y refrescante bien fría.", price: 1.25, img: "🥥" },
+  { id: 9, cat: "Bebidas", name: "Jugo de Cocona", desc: "Jugo 100% natural recién licuado de fruta amazónica.", price: 1.50, img: "🍊" }
 ];
-
 let currentCat = "Todas", cart = [], selectedProd = null, currentTotal = 0;
 let orders = JSON.parse(localStorage.getItem("pastaza_orders") || "[]");
 
@@ -178,25 +153,20 @@ function renderMenu() {
 }
 function selectItem(id) {
   selectedProd = products.find(p => p.id === id);
-  if (!selectedProd.custom) { cart.push({ ...selectedProd, finalPrice: selectedProd.price, details: "" }); updateCart(); return; }
+  if (!selectedProd.opts) { cart.push({ ...selectedProd, finalPrice: selectedProd.price, details: "" }); updateCart(); return; }
   document.getElementById("mTitle").innerText = selectedProd.name;
+  document.getElementById("mDesc").innerText = selectedProd.desc;
   document.getElementById("mBasePrice").innerText = `Base: $${selectedProd.price.toFixed(2)}`;
-  document.getElementById("optCombo").checked = false; document.getElementById("optMaduro").checked = false;
-  document.getElementById("optAji").checked = true; document.getElementById("optNote").value = "";
-  document.getElementById("comboModal").style.display = "flex";
+  document.getElementById("dynOpts").innerHTML = selectedProd.opts.map((o, i) => `<div class="opt-row"><label><input type="checkbox" class="dyn-chk" data-i="${i}" ${o.def?"checked":""}> ${o.n}</label><b>${o.p>0?"+$"+o.p.toFixed(2):"Gratis"}</b></div>`).join("");
+  document.getElementById("optNote").value = ""; document.getElementById("comboModal").style.display = "flex";
 }
-
 function confirmItem() {
-  let extra = 0, det = [];
-  if (document.getElementById("optCombo").checked) { extra += 2.00; det.push("COMBO +Yuca/Guayusa"); }
-  if (document.getElementById("optMaduro").checked) { extra += 1.25; det.push("+Maduro c/Queso"); }
-  if (document.getElementById("optAji").checked) { det.push("Con Ají Cocona"); }
-  const note = document.getElementById("optNote").value.trim();
-  if (note) det.push(`Nota: ${note}`);
-  cart.push({ ...selectedProd, finalPrice: selectedProd.price + extra, details: det.join(", ") });
+  let ex = 0, det = [];
+  document.querySelectorAll(".dyn-chk:checked").forEach(c => { let o = selectedProd.opts[c.dataset.i]; ex += o.p; det.push(o.n); });
+  const n = document.getElementById("optNote").value.trim(); if (n) det.push("Nota: "+n);
+  cart.push({ ...selectedProd, finalPrice: selectedProd.price + ex, details: det.join(", ") });
   closeModals(); updateCart();
 }
-
 function updateCart() {
   currentTotal = cart.reduce((s, i) => s + i.finalPrice, 0);
   document.getElementById("cartCount").innerText = `${cart.length} producto(s)`;
