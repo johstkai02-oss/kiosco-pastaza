@@ -30,6 +30,9 @@
   .stat-card { background: #fff; padding: 10px; border-radius: 10px; text-align: center; }
   .order-card { background: #fff; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--sec); }
   .order-card.listo { border-left-color: #25d366; opacity: 0.7; }
+  .p-img { width: 100%; height: 115px; object-fit: cover; border-radius: 8px; margin-bottom: 6px; }
+  .card { position: relative; }
+  .cam-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.65); color: #fff; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 0.85rem; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -91,16 +94,28 @@
 </div>
 <script>
 const whatsappNum = "593996348376";
+const defaultPics = {
+  1: "data:image/svg+xml;utf8,<svg xmlns=\"http://w3.org\" width=\"300\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"%23e8f5e9\"/><text x=\"50%\" y=\"50%\" font-family=\"sans-serif\" font-size=\"16\" fill=\"%231b5e20\" text-anchor=\"middle\" dominant-baseline=\"middle\">Toca 📷 para subir foto</text></svg>",
+  2: "data:image/svg+xml;utf8,<svg xmlns=\"http://w3.org\" width=\"300\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"%23e8f5e9\"/><text x=\"50%\" y=\"50%\" font-family=\"sans-serif\" font-size=\"16\" fill=\"%231b5e20\" text-anchor=\"middle\" dominant-baseline=\"middle\">Toca 📷 para subir foto</text></svg>",
+  3: "data:image/svg+xml;utf8,<svg xmlns=\"http://w3.org\" width=\"300\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"%23e8f5e9\"/><text x=\"50%\" y=\"50%\" font-family=\"sans-serif\" font-size=\"16\" fill=\"%231b5e20\" text-anchor=\"middle\" dominant-baseline=\"middle\">Toca 📷 para subir foto</text></svg>",
+  4: "data:image/svg+xml;utf8,<svg xmlns=\"http://w3.org\" width=\"300\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"%23e8f5e9\"/><text x=\"50%\" y=\"50%\" font-family=\"sans-serif\" font-size=\"16\" fill=\"%231b5e20\" text-anchor=\"middle\" dominant-baseline=\"middle\">Toca 📷 para subir foto</text></svg>",
+  5: "data:image/svg+xml;utf8,<svg xmlns=\"http://w3.org\" width=\"300\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"%23e8f5e9\"/><text x=\"50%\" y=\"50%\" font-family=\"sans-serif\" font-size=\"16\" fill=\"%231b5e20\" text-anchor=\"middle\" dominant-baseline=\"middle\">Toca 📷 para subir foto</text></svg>",
+  6: "data:image/svg+xml;utf8,<svg xmlns=\"http://w3.org\" width=\"300\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"%23e8f5e9\"/><text x=\"50%\" y=\"50%\" font-family=\"sans-serif\" font-size=\"16\" fill=\"%231b5e20\" text-anchor=\"middle\" dominant-baseline=\"middle\">Toca 📷 para subir foto</text></svg>",
+  7: "data:image/svg+xml;utf8,<svg xmlns=\"http://w3.org\" width=\"300\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"%23e8f5e9\"/><text x=\"50%\" y=\"50%\" font-family=\"sans-serif\" font-size=\"16\" fill=\"%231b5e20\" text-anchor=\"middle\" dominant-baseline=\"middle\">Toca 📷 para subir foto</text></svg>",
+  8: "data:image/svg+xml;utf8,<svg xmlns=\"http://w3.org\" width=\"300\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"%23e8f5e9\"/><text x=\"50%\" y=\"50%\" font-family=\"sans-serif\" font-size=\"16\" fill=\"%231b5e20\" text-anchor=\"middle\" dominant-baseline=\"middle\">Toca 📷 para subir foto</text></svg>",
+  9: "data:image/svg+xml;utf8,<svg xmlns=\"http://w3.org\" width=\"300\" height=\"200\"><rect width=\"100%\" height=\"100%\" fill=\"%23e8f5e9\"/><text x=\"50%\" y=\"50%\" font-family=\"sans-serif\" font-size=\"16\" fill=\"%231b5e20\" text-anchor=\"middle\" dominant-baseline=\"middle\">Toca 📷 para subir foto</text></svg>"
+};
+let savedPics = JSON.parse(localStorage.getItem("pastaza_pics") || "{}");
 const products = [
-  { id: 1, cat: "Amazónicos", name: "Maito de Tilapia", desc: "Tilapia asada en hoja de bijao con yuca, palmito y curtido.", price: 5.50, img: "🐟", opts: [{n:"🥤 Combo (+Guayusa/Yuca)", p:1.75}, {n:"🌿 Extra Palmito", p:1.25}, {n:"🌶️ Ají de Cocona", p:0, def:true}] },
-  { id: 2, cat: "Amazónicos", name: "Pinchos Chontacuro", desc: "1 pincho con 3 chontacuros asados al carbón, yuca cocinada y sal prieta.", price: 4.00, img: "🐛", opts: [{n:"🐛 +2 Chontacuros", p:2.50}, {n:"🍌 Maduro c/Queso", p:1.25}, {n:"🌶️ Ají de Maní", p:0, def:true}] },
-  { id: 3, cat: "Amazónicos", name: "Volquetero Pastacense", desc: "Chocho, tostado, chifle crocante, atún, tomate y limón.", price: 3.50, img: "🥗", opts: [{n:"🐟 Extra Atún", p:1.50}, {n:"🍌 Extra Chifle", p:0.75}, {n:"🌶️ Con Ají", p:0, def:true}] },
-  { id: 4, cat: "Rápida", name: "Burger Amazónica", desc: "Carne artesanal, queso cheddar, maduro y salsa de cocona.", price: 4.50, img: "🍔", opts: [{n:"🍟 Combo (+Papas/Cola)", p:2.25}, {n:"🥩 Doble Carne", p:1.75}, {n:"🧀 Extra Queso", p:0.75}] },
-  { id: 5, cat: "Rápida", name: "Salchipapa Chicharrón", desc: "Papa nativa frita, salchicha ranchera y chicharrón.", price: 3.75, img: "🍟", opts: [{n:"🥓 Extra Chicharrón", p:1.50}, {n:"🍳 Huevo Frito", p:0.75}, {n:"🥫 Todas las salsas", p:0, def:true}] },
-  { id: 6, cat: "Rápida", name: "Bolón Mixto c/ Seco", desc: "Verde majado con queso, chicharrón y jugo de seco.", price: 3.25, img: "🟢", opts: [{n:"☕ Combo (+Café)", p:1.00}, {n:"🍳 Huevo Frito", p:0.75}, {n:"🍖 Extra Jugo Seco", p:0.50}] },
-  { id: 7, cat: "Bebidas", name: "Jarra Guayusa Helada", desc: "Infusión amazónica con limón sutil y panela.", price: 1.50, img: "🍹" },
-  { id: 8, cat: "Bebidas", name: "Chicha de Chonta", desc: "Bebida tradicional dulce y refrescante bien fría.", price: 1.25, img: "🥥" },
-  { id: 9, cat: "Bebidas", name: "Jugo de Cocona", desc: "Jugo 100% natural recién licuado de fruta amazónica.", price: 1.50, img: "🍊" }
+  { id: 1, cat: "Amazónicos", name: "Maito de Tilapia", desc: "Tilapia asada en hoja de bijao con yuca, palmito y curtido.", price: 5.50, opts: [{n:"🥤 Combo (+Guayusa/Yuca)", p:1.75}, {n:"🌿 Extra Palmito", p:1.25}, {n:"🌶️ Ají de Cocona", p:0, def:true}] },
+  { id: 2, cat: "Amazónicos", name: "Pinchos Chontacuro", desc: "1 pincho con 3 chontacuros asados al carbón, yuca y sal prieta.", price: 4.00, opts: [{n:"🐛 +2 Chontacuros", p:2.50}, {n:"🍌 Maduro c/Queso", p:1.25}, {n:"🌶️ Ají de Maní", p:0, def:true}] },
+  { id: 3, cat: "Amazónicos", name: "Volquetero Pastacense", desc: "Chocho, tostado, chifle crocante, atún, tomate y limón.", price: 3.50, opts: [{n:"🐟 Extra Atún", p:1.50}, {n:"🍌 Extra Chifle", p:0.75}, {n:"🌶️ Con Ají", p:0, def:true}] },
+  { id: 4, cat: "Rápida", name: "Burger Amazónica", desc: "Carne artesanal, queso cheddar, maduro y salsa de cocona.", price: 4.50, opts: [{n:"🍟 Combo (+Papas/Cola)", p:2.25}, {n:"🥩 Doble Carne", p:1.75}, {n:"🧀 Extra Queso", p:0.75}] },
+  { id: 5, cat: "Rápida", name: "Salchipapa Chicharrón", desc: "Papa nativa frita, salchicha ranchera y chicharrón.", price: 3.75, opts: [{n:"🥓 Extra Chicharrón", p:1.50}, {n:"🍳 Huevo Frito", p:0.75}, {n:"🥫 Todas las salsas", p:0, def:true}] },
+  { id: 6, cat: "Rápida", name: "Bolón Mixto c/ Seco", desc: "Verde majado con queso, chicharrón y jugo de seco.", price: 3.25, opts: [{n:"☕ Combo (+Café)", p:1.00}, {n:"🍳 Huevo Frito", p:0.75}, {n:"🍖 Extra Jugo Seco", p:0.50}] },
+  { id: 7, cat: "Bebidas", name: "Jarra Guayusa Helada", desc: "Infusión amazónica con limón sutil y panela.", price: 1.50 },
+  { id: 8, cat: "Bebidas", name: "Chicha de Chonta", desc: "Bebida tradicional dulce y refrescante bien fría.", price: 1.25 },
+  { id: 9, cat: "Bebidas", name: "Jugo de Cocona", desc: "Jugo 100% natural recién licuado de fruta amazónica.", price: 1.50 }
 ];
 let currentCat = "Todas", cart = [], selectedProd = null, currentTotal = 0;
 let orders = JSON.parse(localStorage.getItem("pastaza_orders") || "[]");
@@ -144,12 +159,36 @@ init(); }
 
 function renderMenu() {
   const list = currentCat === "Todas" ? products : products.filter(p => p.cat === currentCat);
-  document.getElementById("menuGrid").innerHTML = list.map(p => `
-    <div class="card">
-      <div><div class="emoji">${p.img}</div><b>${p.name}</b><div class="desc">${p.desc}</div></div>
+  document.getElementById("menuGrid").innerHTML = list.map(p => {
+    let pic = savedPics[p.id] || defaultPics[p.id];
+    return `<div class="card">
+      <button class="cam-btn" onclick="uploadPic(${p.id})" title="Cambiar foto">📷</button>
+      <div><img src="${pic}" class="p-img"><b>${p.name}</b><div class="desc">${p.desc}</div></div>
       <div><div class="price">$${p.price.toFixed(2)}</div><button class="btn-add" onclick="selectItem(${p.id})">+ Agregar</button></div>
-    </div>
-  `).join("");
+    </div>`;
+  }).join("");
+}
+function uploadPic(id) {
+  let inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "image/*";
+  inp.onchange = e => {
+    let f = e.target.files[0]; if (!f) return;
+    let r = new FileReader();
+    r.onload = ev => {
+      let img = new Image();
+      img.onload = () => {
+        let c = document.createElement("canvas");
+        c.width = 300; c.height = 220;
+        c.getContext("2d").drawImage(img, 0, 0, 300, 220);
+        savedPics[id] = c.toDataURL("image/jpeg", 0.75);
+        localStorage.setItem("pastaza_pics", JSON.stringify(savedPics));
+        renderMenu();
+      };
+      img.src = ev.target.result;
+    };
+    r.readAsDataURL(f);
+  };
+  inp.click();
 }
 function selectItem(id) {
   selectedProd = products.find(p => p.id === id);
