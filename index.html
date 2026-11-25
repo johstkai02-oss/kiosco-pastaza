@@ -1,40 +1,204 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sabor Pastaza</title><style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui}body{background:#f1f8e9;color:#1b5e20;padding-bottom:80px}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sabor Pastaza</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui}
+body{background:#f1f8e9;color:#1b5e20;padding-bottom:80px}
 header{background:#1b5e20;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
 .btn-top{background:#ffb300;color:#000;border:none;padding:8px 12px;border-radius:8px;font-weight:bold}
 .cats{display:flex;gap:8px;padding:10px;overflow-x:auto;background:#e8f5e9}
-.cat{padding:6px 14px;border-radius:20px;border:1px solid #1b5e20;background:#fff;color:#1b5e20;font-weight:600;white-space:nowrap}.cat.active{background:#1b5e20;color:#fff}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}@media(min-width:768px){.grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}}
+.cat{padding:6px 14px;border-radius:20px;border:1px solid #1b5e20;background:#fff;color:#1b5e20;font-weight:600;white-space:nowrap}
+.cat.active{background:#1b5e20;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
+@media(min-width:768px){.grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}}
 .card{background:#fff;border-radius:12px;padding:10px;box-shadow:0 2px 6px rgba(0,0,0,.08);display:flex;flex-direction:column;justify-content:space-between}
 .p-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;margin-bottom:6px;background:#e8f5e9;display:block}
-.price{font-weight:bold;font-size:1.05rem;margin:4px 0}.btn-add{width:100%;background:#2e7d32;color:#fff;border:none;padding:8px;border-radius:8px;font-weight:bold}
+.price{font-weight:bold;font-size:1.05rem;margin:4px 0}
+.btn-add{width:100%;background:#2e7d32;color:#fff;border:none;padding:8px;border-radius:8px;font-weight:bold}
 .cart-bar{position:fixed;bottom:0;left:0;right:0;background:#1b5e20;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10}
 .btn-pay{background:#ffb300;color:#000;border:none;padding:10px 16px;border-radius:8px;font-weight:bold}
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);justify-content:center;align-items:center;padding:16px;z-index:20}
 .modal-box{background:#fff;padding:16px;border-radius:12px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto}
 .opt-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee}
 input[type=text],select{width:100%;padding:8px;margin-top:8px;border:1px solid #ccc;border-radius:8px}
-.dash{padding:12px;display:none}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.stat{background:#fff;padding:10px;border-radius:10px;text-align:center}
-.order-card{background:#fff;padding:12px;border-radius:10px;margin-bottom:10px;border-left:5px solid #ff9800}.order-card.listo{border-left-color:#2e7d32}
-</style></head>
+.dash{padding:12px;display:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:#fff;padding:10px;border-radius:10px;text-align:center}
+.order-card{background:#fff;padding:12px;border-radius:10px;margin-bottom:10px;border-left:5px solid #ff9800}
+.order-card.listo{border-left-color:#2e7d32}
+</style>
+</head>
 <body>
-<header><h2>🌴 Sabor Pastaza</h2><button class="btn-top" onclick="toggleView()">👨‍🍳 Caja / Cocina</button></header>
-<div id="kioscoView"><div class="cats" id="catBar"></div><div class="grid" id="prodGrid"></div></div>
-<div id="dashView" class="dash"><div class="stats"><div class="stat"><small>Pedidos</small><h3 id="stCount">0</h3></div><div class="stat"><small>Pendientes</small><h3 id="stPend">0</h3></div><div class="stat"><small>Ventas</small><h3 id="stTotal">$0.00</h3></div></div><div id="ordersList"></div></div>
-<div class="cart-bar" id="cartBar"><span id="cartInfo">0 items • $0.00</span><button class="btn-pay" onclick="openCheckout()">Cobrar →</button></div>
-<div class="modal" id="optModal"><div class="modal-box"><h3 id="optTitle"></h3><div id="optList" style="margin:8px 0"></div><input type="text" id="optNote" placeholder="Nota opcional (ej. Tomate con sal)"><div style="display:flex;gap:8px;margin-top:12px"><button class="btn-add" style="background:#777" onclick="closeOpt()">Cancelar</button><button class="btn-add" onclick="confirmOpt()">Agregar</button></div></div></div>
-<div class="modal" id="checkoutModal"><div class="modal-box"><h3>Resumen del Pedido</h3><div id="cartItems" style="margin:8px 0"></div><input type="text" id="clientName" placeholder="Nombre del cliente (opcional)"><select id="orderType"><option value="Para Servirse">Para Servirse</option><option value="Para Llevar">Para Llevar</option></select><select id="cashier"><option value="Kiosco Autoservicio">Kiosco Autoservicio</option><option value="Caja 2 (Rápida)">Caja 2 (Rápida)</option></select><select id="payMethod"><option value="Efectivo">Efectivo</option><option value="DeUna / Transferencia">DeUna / Transferencia</option></select><div style="display:flex;gap:8px;margin-top:12px"><button class="btn-add" style="background:#777" onclick="closeCheckout()">Cancelar</button><button class="btn-add" onclick="confirmOrder()">Enviar y WhatsApp</button></div></div></div>
+<header>
+  <h2>🌴 Sabor Pastaza</h2>
+  <button class="btn-top" onclick="toggleView()">👨‍🍳 Caja / Cocina</button>
+</header>
+
+<div id="kioscoView">
+  <div class="cats" id="catBar"></div>
+  <div class="grid" id="prodGrid"></div>
+</div>
+
+<div id="dashView" class="dash">
+  <div class="stats">
+    <div class="stat"><small>Pedidos</small><h3 id="stCount">0</h3></div>
+    <div class="stat"><small>Pendientes</small><h3 id="stPend">0</h3></div>
+    <div class="stat"><small>Ventas</small><h3 id="stTotal">$0.00</h3></div>
+  </div>
+  <div id="ordersList"></div>
+</div>
+
+<div class="cart-bar" id="cartBar">
+  <span id="cartInfo">0 items • $0.00</span>
+  <button class="btn-pay" onclick="openCheckout()">Cobrar →</button>
+</div>
+
+<div class="modal" id="optModal">
+  <div class="modal-box">
+    <h3 id="optTitle"></h3>
+    <div id="optList" style="margin:8px 0"></div>
+    <input type="text" id="optNote" placeholder="Nota opcional (ej. Tomate en rodajas con sal)">
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn-add" style="background:#777" onclick="closeOpt()">Cancelar</button>
+      <button class="btn-add" onclick="confirmOpt()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="checkoutModal">
+  <div class="modal-box">
+    <h3>Resumen del Pedido</h3>
+    <div id="cartItems" style="margin:8px 0"></div>
+    <input type="text" id="clientName" placeholder="Nombre del cliente (opcional)">
+    <select id="orderType">
+      <option value="Para Servirse">Para Servirse</option>
+      <option value="Para Llevar">Para Llevar</option>
+    </select>
+    <select id="cashier">
+      <option value="Kiosco Autoservicio">Kiosco Autoservicio</option>
+      <option value="Caja 2 (Rápida)">Caja 2 (Rápida)</option>
+    </select>
+    <select id="payMethod">
+      <option value="Efectivo">Efectivo</option>
+      <option value="DeUna / Transferencia">DeUna / Transferencia</option>
+    </select>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn-add" style="background:#777" onclick="closeCheckout()">Cancelar</button>
+      <button class="btn-add" onclick="confirmOrder()">Enviar y WhatsApp</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const productos=[
- {id:1,nombre:"Maito de Tilapia",cat:"Platos Fuertes",precio:6.00,img:"fotos/1.jpg.JPG",extras:[{n:"🥤 Combo (+Guayusa/Yuca)",p:1.50},{n:"🌿 Extra Palmito",p:1.00},{n:"🌶️ Ají de Cocona",p:0}]},
- {id:2,nombre:"Pinchos Chontacuro",cat:"Típicos",precio:4.50,img:"fotos/2.jpg.JPG",extras:[{n:"🐛 +2 Chontacuros",p:2.00},{n:"🍌 Maduro c/Queso",p:1.25},{n:"🌶️ Ají de Maní",p:0}]},
- {id:3,nombre:"Volquetero Pastacense",cat:"Típicos",precio:3.50,img:"fotos/3.jpg.JPG",extras:[{n:"🐟 Extra Atún",p:1.50},{n:"🍌 Extra Chifle",p:0.75},{n:"🌶️ Con Ají",p:0}]},
- {id:4,nombre:"Burger Amazónica",cat:"Platos Fuertes",precio:5.50,img:"fotos/4.jpg.JPG",extras:[{n:"🍟 Combo (+Papas/Cola)",p:1.50},{n:"🥩 Doble Carne",p:1.50},{n:"🧀 Extra Queso",p:0.75}]},
- {id:5,nombre:"Salchipapa Chicharrón",cat:"Típicos",precio:3.75,img:"fotos/5.jpg.JPG",extras:[{n:"🥓 Extra Chicharrón",p:1.50},{n:"🍳 Huevo Frito",p:0.75}]},
- {id:6,nombre:"Bolón Mixto c/ Seco",cat:"Platos Fuertes",precio:3.50,img:"fotos/6.jpg.JPG",extras:[{n:"☕ Combo (+Café)",p:0.75},{n:"🍳 Huevo Frito",p:0.75},{n:"🍖 Extra Jugo Seco",p:0.50}]},
- {id:7,nombre:"Agua de Guayusa",cat:"Bebidas",precio:1.50,img:"fotos/7.jpg.JPG",extras:[]},
- {id:8,nombre:"Chicha de Chonta",cat:"Bebidas",precio:1.50,img:"fotos/8.jpg.JPG",extras:[]},
- {id:9,nombre:"Jugo de Cocona",cat:"Bebidas",precio:1.50,img:"fotos/9.jpg.JPG",extras:[]}
-document.getElementById("ordersList").innerHTML=pedidos.map((o,i)=>`<div class="order-card ${o.estado}"><div style="display:flex;justify-content:space-between"><b>#${o.id} (${o.tipo}) - ${o.cliente}</b><span>$${o.total.toFixed(2)} (${o.metodo})</span></div><p style="margin:6px 0;font-size:.88rem">${o.items.map(x=>x.nombre+(x.det?` [${x.det}]`:"")).join(" • ")}</p><button class="btn-top" onclick="marcarListo(${i})">${o.estado==="pendiente"?"✓ Marcar Listo":"✓ Entregado"}</button></div>`).join("");}
-function marcarListo(i){pedidos[i].estado="listo";localStorage.setItem("pedidos_sp",JSON.stringify(pedidos));renderDash();}
-init();</script></body></html>
+const productos = [
+  {id:1, nombre:"Maito de Tilapia", cat:"Platos Fuertes", precio:6.00, img:"fotos/1.jpg.JPG", extras:[{n:"🥤 Combo (+Guayusa/Yuca)",p:1.50},{n:"🌿 Extra Palmito",p:1.00},{n:"🌶️ Ají de Cocona",p:0}]},
+  {id:2, nombre:"Pinchos Chontacuro", cat:"Típicos", precio:4.50, img:"fotos/2.jpg.JPG", extras:[{n:"🐛 +2 Chontacuros",p:2.00},{n:"🍌 Maduro c/Queso",p:1.25},{n:"🌶️ Ají de Maní",p:0}]},
+  {id:3, nombre:"Volquetero Pastacense", cat:"Típicos", precio:3.50, img:"fotos/3.jpg.JPG", extras:[{n:"🐟 Extra Atún",p:1.50},{n:"🍌 Extra Chifle",p:0.75},{n:"🌶️ Con Ají",p:0}]},
+  {id:4, nombre:"Burger Amazónica", cat:"Platos Fuertes", precio:5.50, img:"fotos/4.jpg.JPG", extras:[{n:"🍟 Combo (+Papas/Cola)",p:1.50},{n:"🥩 Doble Carne",p:1.50},{n:"🧀 Extra Queso",p:0.75}]},
+  {id:5, nombre:"Salchipapa Chicharrón", cat:"Típicos", precio:3.75, img:"fotos/5.jpg.JPG", extras:[{n:"🥓 Extra Chicharrón",p:1.50},{n:"🍳 Huevo Frito",p:0.75}]},
+  {id:6, nombre:"Bolón Mixto c/ Seco", cat:"Platos Fuertes", precio:3.50, img:"fotos/6.jpg.JPG", extras:[{n:"☕ Combo (+Café)",p:0.75},{n:"🍳 Huevo Frito",p:0.75},{n:"🍖 Extra Jugo Seco",p:0.50}]},
+  {id:7, nombre:"Agua de Guayusa", cat:"Bebidas", precio:1.50, img:"fotos/7.jpg.JPG", extras:[]},
+  {id:8, nombre:"Chicha de Chonta", cat:"Bebidas", precio:1.50, img:"fotos/8.jpg.JPG", extras:[]},
+  {id:9, nombre:"Jugo de Cocona", cat:"Bebidas", precio:1.50, img:"fotos/9.jpg.JPG", extras:[]}
+];
+
+let catActual = "Todos", carrito = [], selProd = null;
+let pedidos = JSON.parse(localStorage.getItem("pedidos_sp") || "[]");
+let numOrden = Number(localStorage.getItem("num_sp") || 100);
+
+function init(){
+  const cats = ["Todos", ...new Set(productos.map(p => p.cat))];
+  document.getElementById("catBar").innerHTML = cats.map(c =>
+    `<button class="cat ${c === catActual ? 'active' : ''}" onclick="setCat('${c}')">${c}</button>`
+  ).join("");
+  const f = catActual === "Todos" ? productos : productos.filter(p => p.cat === catActual);
+  document.getElementById("prodGrid").innerHTML = f.map(p => `
+    <div class="card">
+      <div>
+        <img class="p-img" src="${p.img}">
+        <h4>${p.nombre}</h4>
+      </div>
+      <div>
+        <div class="price">$${p.precio.toFixed(2)}</div>
+        <button class="btn-add" onclick="selectProd(${p.id})">+ Agregar</button>
+      </div>
+    </div>
+  `).join("");
+  updateBar();
+}
+
+function setCat(c){ catActual = c; init(); }
+
+function selectProd(id){
+  const p = productos.find(x => x.id === id);
+  if(!p.extras.length){
+    carrito.push({nombre: p.nombre, precio: p.precio, det: ""});
+    return updateBar();
+  }
+  selProd = p;
+  document.getElementById("optTitle").innerText = p.nombre + " ($" + p.precio.toFixed(2) + ")";
+  document.getElementById("optList").innerHTML = p.extras.map((e, i) =>
+    `<label class="opt-row"><span>${e.n} ${e.p ? `(+$${e.p.toFixed(2)})` : ""}</span><input type="checkbox" value="${i}"></label>`
+  ).join("");
+  document.getElementById("optNote").value = "";
+  document.getElementById("optModal").style.display = "flex";
+}
+
+function closeOpt(){ document.getElementById("optModal").style.display = "none"; }
+
+function confirmOpt(){
+  let tot = selProd.precio, ex = [];
+  document.querySelectorAll("#optList input:checked").forEach(cb => {
+    const e = selProd.extras[cb.value];
+    tot += e.p;
+    ex.push(e.n);
+  });
+  const nota = document.getElementById("optNote").value.trim();
+  if(nota) ex.push("Nota: " + nota);
+  carrito.push({nombre: selProd.nombre, precio: tot, det: ex.join(", ")});
+  updateBar();
+  closeOpt();
+}
+
+function updateBar(){
+  const t = carrito.reduce((s, p) => s + p.precio, 0);
+  document.getElementById("cartInfo").innerText = `${carrito.length} items • $${t.toFixed(2)}`;
+}
+
+function openCheckout(){
+  if(!carrito.length) return alert("Agrega productos");
+  document.getElementById("cartItems").innerHTML = carrito.map((p, i) =>
+    `<div class="opt-row"><div><b>${p.nombre}</b><br><small>${p.det}</small></div><b>$${p.precio.toFixed(2)} <a href="#" onclick="delItem(${i})" style="color:red">✕</a></b></div>`
+  ).join("");
+  document.getElementById("checkoutModal").style.display = "flex";
+}
+
+function delItem(i){
+  carrito.splice(i, 1);
+  carrito.length ? openCheckout() : closeCheckout();
+  updateBar();
+}
+
+function closeCheckout(){ document.getElementById("checkoutModal").style.display = "none"; }
+
+function confirmOrder(){
+  numOrden++;
+  localStorage.setItem("num_sp", numOrden);
+  const c = document.getElementById("clientName").value.trim() || "Cliente";
+  const tipo = document.getElementById("orderType").value;
+  const caj = document.getElementById("cashier").value;
+  const m = document.getElementById("payMethod").value;
+  const t = carrito.reduce((s, p) => s + p.precio, 0);
+  const o = {id: numOrden, cliente: c, tipo, caj, metodo: m, total: t, items: [...carrito], estado: "pendiente"};
+  pedidos.unshift(o);
+  localStorage.setItem("pedidos_sp", JSON.stringify(pedidos));
+  let msg = `🌴 *PEDIDO #${o.id} (${tipo})*\n👤 Cliente: ${c}\n👨‍🍳 Cajero: ${caj}\n💳 Pago: ${m}\n\n`;
+  o.items.forEach(x => {
+    msg += `▪️ ${x.nombre} ($${x.precio.toFixed(2)})\n${x.det ? `   ${x.det}\n` : ""}`;
+  });
+  msg += `\n*TOTAL: $${t.toFixed(2)}*`;
+  carrito = [];
+  updateBar();
