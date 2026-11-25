@@ -42,4 +42,5 @@ const productos=[
  {id:8,nombre:"Chicha de Chonta",cat:"Bebidas",precio:2.00,desc:"Bebida tradicional en pilche",img:"fotos/8.jpg.JPG"},
  {id:9,nombre:"Jugo de Cocona",cat:"Bebidas",precio:2.00,desc:"Jugo natural bien frío",img:"fotos/9.jpg.JPG"}
 ];
+function init(){const cats=["Todos",...new Set(productos.map(p=>p.cat))];document.getElementById("catBar").innerHTML=cats.map(c=>`<button class="cat ${c===catActual?'active':''}" onclick="setCat('${c}')">${c}</button>`).join("");const f=catActual==="Todos"?productos:productos.filter(p=>p.cat===catActual);document.getElementById("prodGrid").innerHTML=f.map(p=>`<div class="card"><div><img class="p-img" src="${p.img}"><h4>${p.nombre}</h4><p class="desc">${p.desc}</p></div><div><div class="price">$${p.precio.toFixed(2)}</div><button class="btn-add" onclick="addCart(${p.id})">+ Agregar</button></div></div>`).join("");updateBar();}
 let catActual="Todos",carrito=[],pedidos=JSON.parse(localStorage.getItem("pedidos_sp")||"[]");
