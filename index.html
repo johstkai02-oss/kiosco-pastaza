@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sabor Pastaza Express</title><style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui}
+body{background:#f1f8e9;color:#1b5e20;padding-bottom:80px}
+header{background:#1b5e20;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.btn-top{background:#ffb300;color:#000;border:none;padding:8px 12px;border-radius:8px;font-weight:bold}
+.cats{display:flex;gap:8px;padding:10px;overflow-x:auto;background:#e8f5e9}
+.cat{padding:6px 14px;border-radius:20px;border:1px solid #1b5e20;background:#fff;color:#1b5e20;font-weight:600;white-space:nowrap}
+.cat.active{background:#1b5e20;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
+@media(min-width:768px){.grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}}
+.card{background:#fff;border-radius:12px;padding:10px;box-shadow:0 2px 6px rgba(0,0,0,.08);display:flex;flex-direction:column;justify-content:space-between}
+.p-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;margin-bottom:6px;background:#e8f5e9;display:block}
+.desc{font-size:.78rem;color:#555;margin:4px 0}
+.price{font-weight:bold;font-size:1.05rem;margin:4px 0}
+.btn-add{width:100%;background:#2e7d32;color:#fff;border:none;padding:8px;border-radius:8px;font-weight:bold}
+.cart-bar{position:fixed;bottom:0;left:0;right:0;background:#1b5e20;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+.btn-pay{background:#ffb300;color:#000;border:none;padding:10px 16px;border-radius:8px;font-weight:bold}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);justify-content:center;align-items:center;padding:16px;z-index:20}
+.modal-box{background:#fff;padding:16px;border-radius:12px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto}
+.opt-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee}
+input,select{width:100%;padding:8px;margin-top:8px;border:1px solid #ccc;border-radius:8px}
+.dash{padding:12px;display:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:#fff;padding:10px;border-radius:10px;text-align:center}
+.order-card{background:#fff;padding:12px;border-radius:10px;margin-bottom:10px;border-left:5px solid #ff9800}
+.order-card.listo{border-left-color:#2e7d32}
+</style></head><body>
+<header><h2>🌴 Sabor Pastaza</h2><button class="btn-top" onclick="toggleView()">👨‍🍳 Caja / Cocina</button></header>
+<div id="kioscoView"><div class="cats" id="catBar"></div><div class="grid" id="prodGrid"></div></div>
+<div id="dashView" class="dash">
+  <div class="stats">
+    <div class="stat"><small>Pedidos</small><h3 id="stCount">0</h3></div>
+    <div class="stat"><small>Pendientes</small><h3 id="stPend">0</h3></div>
+    <div class="stat"><small>Ventas</small><h3 id="stTotal">$0.00</h3></div>
+  </div>
+  <div id="ordersList"></div>
+</div>
+<div class="cart-bar" id="cartBar"><span id="cartInfo">0 items • $0.00</span><button class="btn-pay" onclick="openCheckout()">Cobrar →</button></div>
+<div class="modal" id="checkoutModal"><div class="modal-box">
+  <h3>Resumen del Pedido</h3><div id="cartItems" style="margin:10px 0"></div>
+  <input type="text" id="clientName" placeholder="Nombre del cliente">
+  <select id="payMethod"><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option></select>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="btn-add" style="background:#777" onclick="closeCheckout()">Cancelar</button>
+    <button class="btn-add" onclick="confirmOrder()">Confirmar</button>
+  </div>
+</div></div><script>
+const productos=[
+ {id:1,nombre:"Maito de Tilapia",cat:"Platos Fuertes",precio:6.50,desc:"Con yuca y ensalada",img:"fotos/maito.jpg"},
+ {id:2,nombre:"Pincho Chontacuro",cat:"Típicos",precio:3.00,desc:"Asado al carbón",img:"fotos/chontacuro.jpg"},
+ {id:3,nombre:"Seco de Guanta",cat:"Platos Fuertes",precio:7.50,desc:"Arroz, maduro y aguacate",img:"fotos/guanta.jpg"},
+ {id:4,nombre:"Volquetero",cat:"Típicos",precio:4.50,desc:"Chocho, tostado, atún y chifle",img:"fotos/volquetero.jpg"},
+ {id:5,nombre:"Agua de Guayusa",cat:"Bebidas",precio:1.50,desc:"Infusión amazónica",img:"fotos/guayusa.jpg"},
+ {id:6,nombre:"Chicha de Chonta",cat:"Bebidas",precio:2.00,desc:"Bebida tradicional",img:"fotos/chicha.jpg"}
+];
+let catActual="Todos",carrito=[],pedidos=JSON.parse(localStorage.getItem("pedidos_sp")||"[]");
+function init(){
+ const cats=["Todos",...new Set(productos.map(p=>p.cat))];
+ document.getElementById("catBar").innerHTML=cats.map(c=>`<button class="cat ${c===catActual?'active':''}" onclick="setCat('${c}')">${c}</button>`).join("");
+ const f=catActual==="Todos"?productos:productos.filter(p=>p.cat===catActual);
+ document.getElementById("prodGrid").innerHTML=f.map(p=>`<div class="card"><div><img class="p-img" src="${p.img}" onerror="this.style.display='none'"><h4>${p.nombre}</h4><p class="desc">${p.desc}</p></div><div><div class="price">$${p.precio.toFixed(2)}</div><button class="btn-add" onclick="addCart(${p.id})">+ Agregar</button></div></div>`).join("");
+ updateBar();
+}
+function setCat(c){catActual=c;init();}
+function addCart(id){carrito.push(productos.find(p=>p.id===id));updateBar();}
+function updateBar(){const t=carrito.reduce((s,p)=>s+p.precio,0);document.getElementById("cartInfo").innerText=`${carrito.length} items • $${t.toFixed(2)}`;}
+function openCheckout(){if(!carrito.length)return alert("Agrega productos");document.getElementById("cartItems").innerHTML=carrito.map((p,i)=>`<div class="opt-row"><span>${p.nombre}</span><b>$${p.precio.toFixed(2)} <a href="#" onclick="delItem(${i})" style="color:red">✕</a></b></div>`).join("");document.getElementById("checkoutModal").style.display="flex";}
+function delItem(i){carrito.splice(i,1);carrito.length?openCheckout():closeCheckout();updateBar();}
+function closeCheckout(){document.getElementById("checkoutModal").style.display="none";}
+function confirmOrder(){const c=document.getElementById("clientName").value||"Cliente",m=document.getElementById("payMethod").value,t=carrito.reduce((s,p)=>s+p.precio,0),o={id:Date.now().toString().slice(-4),cliente:c,metodo:m,total:t,items:[...carrito],estado:"pendiente"};pedidos.unshift(o);localStorage.setItem("pedidos_sp",JSON.stringify(pedidos));carrito=[];updateBar();closeCheckout();document.getElementById("clientName").value="";alert("Pedido #"+o.id+" enviado!");}
+function toggleView(){const k=document.getElementById("kioscoView"),d=document.getElementById("dashView"),b=document.getElementById("cartBar"),v=d.style.display!=="block";k.style.display=v?"none":"block";b.style.display=v?"none":"flex";d.style.display=v?"block":"none";if(v)renderDash();}
+function renderDash(){document.getElementById("stCount").innerText=pedidos.length;document.getElementById("stPend").innerText=pedidos.filter(o=>o.estado==="pendiente").length;document.getElementById("stTotal").innerText="$"+pedidos.reduce((s,o)=>s+o.total,0).toFixed(2);document.getElementById("ordersList").innerHTML=pedidos.map((o,i)=>`<div class="order-card ${o.estado}"><div style="display:flex;justify-content:space-between"><b>#${o.id} - ${o.cliente}</b><span>$${o.total.toFixed(2)} (${o.metodo})</span></div><p style="margin:6px 0;font-size:.9rem">${o.items.map(x=>x.nombre).join(", ")}</p><button class="btn-top" onclick="marcarListo(${i})">${o.estado==='pendiente'?'✓ Marcar Listo':'✓ Entregado'}</button></div>`).join("");}
+function marcarListo(i){pedidos[i].estado="listo";localStorage.setItem("pedidos_sp",JSON.stringify(pedidos));renderDash();}
+init();</script></body></html>
