@@ -202,3 +202,46 @@ function confirmOrder(){
   msg += `\n*TOTAL: $${t.toFixed(2)}*`;
   carrito = [];
   updateBar();
+    closeCheckout();
+  document.getElementById("clientName").value = "";
+  window.open("https://wa.me" + encodeURIComponent(msg), "_blank");
+}
+
+function toggleView(){
+  const k = document.getElementById("kioscoView");
+  const d = document.getElementById("dashView");
+  const b = document.getElementById("cartBar");
+  const v = d.style.display !== "block";
+  k.style.display = v ? "none" : "block";
+  b.style.display = v ? "none" : "flex";
+  d.style.display = v ? "block" : "none";
+  if(v) renderDash();
+}
+
+function renderDash(){
+  document.getElementById("stCount").innerText = pedidos.length;
+  document.getElementById("stPend").innerText = pedidos.filter(o => o.estado === "pendiente").length;
+  document.getElementById("stTotal").innerText = "$" + pedidos.reduce((s, o) => s + o.total, 0).toFixed(2);
+  document.getElementById("ordersList").innerHTML = pedidos.map((o, i) => `
+    <div class="order-card ${o.estado}">
+      <div style="display:flex;justify-content:space-between">
+        <b>#${o.id} (${o.tipo}) - ${o.cliente}</b>
+        <span>$${o.total.toFixed(2)} (${o.metodo})</span>
+      </div>
+      <p style="margin:6px 0;font-size:.88rem">${o.items.map(x => x.nombre + (x.det ? ` [${x.det}]` : "")).join(" • ")}</p>
+      <button class="btn-top" onclick="marcarListo(${i})">${o.estado === "pendiente" ? "✓ Marcar Listo" : "✓ Entregado"}</button>
+    </div>
+  `).join("");
+}
+
+function marcarListo(i){
+  pedidos[i].estado = "listo";
+  localStorage.setItem("pedidos_sp", JSON.stringify(pedidos));
+  renderDash();
+}
+
+init();
+</script>
+</body>
+</html>
+
