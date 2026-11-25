@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sabor Pastaza Express</title><style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui}
+body{background:#f1f8e9;color:#1b5e20;padding-bottom:80px}
+header{background:#1b5e20;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.btn-top{background:#ffb300;color:#000;border:none;padding:8px 12px;border-radius:8px;font-weight:bold}
+.cats{display:flex;gap:8px;padding:10px;overflow-x:auto;background:#e8f5e9}
+.cat{padding:6px 14px;border-radius:20px;border:1px solid #1b5e20;background:#fff;color:#1b5e20;font-weight:600;white-space:nowrap}
+.cat.active{background:#1b5e20;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
+@media(min-width:768px){.grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}}
+.card{background:#fff;border-radius:12px;padding:10px;box-shadow:0 2px 6px rgba(0,0,0,.08);display:flex;flex-direction:column;justify-content:space-between}
+.p-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;margin-bottom:6px;background:#e8f5e9;display:block}
+.desc{font-size:.78rem;color:#555;margin:4px 0}
+.price{font-weight:bold;font-size:1.05rem;margin:4px 0}
+.btn-add{width:100%;background:#2e7d32;color:#fff;border:none;padding:8px;border-radius:8px;font-weight:bold}
+.cart-bar{position:fixed;bottom:0;left:0;right:0;background:#1b5e20;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+.btn-pay{background:#ffb300;color:#000;border:none;padding:10px 16px;border-radius:8px;font-weight:bold}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);justify-content:center;align-items:center;padding:16px;z-index:20}
+.modal-box{background:#fff;padding:16px;border-radius:12px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto}
+.opt-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee}
+input,select{width:100%;padding:8px;margin-top:8px;border:1px solid #ccc;border-radius:8px}
+.dash{padding:12px;display:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:#fff;padding:10px;border-radius:10px;text-align:center}
+.order-card{background:#fff;padding:12px;border-radius:10px;margin-bottom:10px;border-left:5px solid #ff9800}
+.order-card.listo{border-left-color:#2e7d32}
+</style></head><body>
+<header><h2>🌴 Sabor Pastaza</h2><button class="btn-top" onclick="toggleView()">👨‍🍳 Caja / Cocina</button></header>
+<div id="kioscoView"><div class="cats" id="catBar"></div><div class="grid" id="prodGrid"></div></div><script>
+</div></div><script>
+let catActual="Todos",carrito=[],pedidos=JSON.parse(localStorage.getItem("pedidos_sp")||"[]");
+const productos=[
+ {id:1,nombre:"Maito de Tilapia",cat:"Platos Fuertes",precio:6.50,desc:"Con yuca, palmito y curtido",img:"fotos/1.jpg.JPG"},
+ {id:2,nombre:"Pincho de Chontacuro",cat:"Típicos",precio:3.00,desc:"Asado al carbón con yuca y ají",img:"fotos/2.jpg.JPG"},
+ {id:3,nombre:"Volquetero Amazónico",cat:"Típicos",precio:4.50,desc:"Chocho, tostado, atún y chifle",img:"fotos/3.jpg.JPG"},
+ {id:4,nombre:"Hamburguesa Amazónica",cat:"Platos Fuertes",precio:5.00,desc:"Con maduro frito y salsa especial",img:"fotos/4.jpg.JPG"},
+ {id:5,nombre:"Salchipapa con Chicharrón",cat:"Típicos",precio:4.50,desc:"Papas, salchicha y chicharrón",img:"fotos/5.jpg.JPG"},
+ {id:6,nombre:"Bolón con Seco de Carne",cat:"Platos Fuertes",precio:5.50,desc:"Bolón mixto en jugo de carne",img:"fotos/6.jpg.JPG"},
+ {id:7,nombre:"Agua de Guayusa",cat:"Bebidas",precio:1.50,desc:"Infusión amazónica tradicional",img:"fotos/7.jpg.JPG"},
+ {id:8,nombre:"Chicha de Chonta",cat:"Bebidas",precio:2.00,desc:"Bebida tradicional en pilche",img:"fotos/8.jpg.JPG"},
+ {id:9,nombre:"Jugo de Cocona",cat:"Bebidas",precio:2.00,desc:"Jugo natural bien frío",img:"fotos/9.jpg.JPG"}
+];
+let catActual="Todos",carrito=[],pedidos=JSON.parse(localStorage.getItem("pedidos_sp")||"[]");
