@@ -245,3 +245,62 @@ init();
 </body>
 </html>
 
+
+<div id="agropay-widget" style="position:fixed;bottom:10px;right:10px;background:#0f172a;color:#fff;padding:12px;border-radius:10px;border:1px solid #10b981;font-family:sans-serif;z-index:9999;font-size:13px">
+  <b>AgroPay Offline</b> | <span id="ap-saldos">Cargando...</span><br><br>
+  <input id="ap-de" value="finca1" size="6"> a <input id="ap-a" value="tienda1" size="6">
+  $<input id="ap-monto" value="5.00" size="4">
+  <button onclick="cobrarKiosco()" style="background:#10b981;color:#000;border:none;padding:4px 8px;border-radius:4px;font-weight:bold">Cobrar</button>
+</div>
+<script>
+async function verSaldos() {
+  const r = await fetch('/api/estado'); const d = await r.json();
+  document.getElementById('ap-saldos').innerText = d.cuentas.map(c => `${c}:$${c.toFixed(2)}`).join(' | ');
+}
+async function cobrarKiosco() {
+  const body = {de: document.getElementById('ap-de').value, a: document.getElementById('ap-a').value, monto: document.getElementById('ap-monto').value};
+  const r = await fetch('/api/pagar', {method:'POST', body: JSON.stringify(body)});
+  const res = await r.json();
+  alert(res.ok ? 'Pago OK: ' + res.tx_id : res.error);
+  verSaldos();
+}
+setInterval(verSaldos, 4000); verSaldos();
+</script>
+
+<script src="/admin/qr_scan.js"></script>
+<div id="lector-qr-box" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:10000;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:sans-serif">
+  <video id="qr-video" width="280" height="280" style="border:2px solid #10b981;border-radius:12px;background:#000" playsinline></video><br>
+  <button onclick="cerrarCamaraQR()" style="background:#ef4444;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:bold">Cancelar</button>
+</div>
+<script>
+document.querySelector('#agropay-widget button').insertAdjacentHTML('beforebegin', '<button onclick="abrirCamaraQR()" style="background:#38bdf8;color:#000;border:none;padding:4px 8px;border-radius:4px;font-weight:bold;margin-right:4px">📷 QR</button>');
+let qrStream = null;
+async function abrirCamaraQR() {
+  document.getElementById('lector-qr-box').style.display = 'flex';
+  try {
+    qrStream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
+    const vid = document.getElementById('qr-video'); vid.srcObject = qrStream; await vid.play();
+    if ('BarcodeDetector' in window) {
+      const det = new BarcodeDetector({formats: ['qr_code']});
+      const loop = setInterval(async () => {
+        if (!qrStream) return clearInterval(loop);
+        const codes = await det.detect(vid);
+        if (codes.length) { aplicarQR(codes.item(0).rawValue); clearInterval(loop); }
+      }, 400);
+    }
+  } catch (e) {
+    const manual = prompt('Pega o escanea código QR (ej. AGROPAY|finca1|Carlos):');
+    if (manual) aplicarQR(manual);
+    cerrarCamaraQR();
+  }
+}
+function aplicarQR(txt) {
+  const partes = txt.split('|');
+  document.getElementById('ap-de').value = partes.length >= 2 ? partes.at(1) : txt;
+  cerrarCamaraQR();
+}
+function cerrarCamaraQR() {
+  if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
+  document.getElementById('lector-qr-box').style.display = 'none';
+}
+</script>
